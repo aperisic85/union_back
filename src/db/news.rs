@@ -39,3 +39,18 @@ pub async fn create_news(pool: &PgPool, payload: CreateNewsPost) -> Result<NewsP
     .await
     .map_err(ApiError::DatabaseError)
 }
+pub async fn get_news_by_id(pool: &PgPool, id: i32) -> Result<NewsPost, ApiError> {
+    sqlx::query_as!(
+        NewsPost,
+        r#"
+        SELECT id, title, content, created_at as "created_at: chrono::DateTime<Utc>"
+        FROM news
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_optional(pool)
+    .await
+    .map_err(ApiError::DatabaseError)?
+    .ok_or(ApiError::NotFound)
+}
